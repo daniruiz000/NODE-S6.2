@@ -1,2 +1,2 @@
-let texto: string = " Hola"
+const texto: string = " Hola"
 console.log(texto)
