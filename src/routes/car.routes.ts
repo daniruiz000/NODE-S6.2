@@ -2,7 +2,7 @@
 import express from "express";
 
 // Importamos el modelo que nos sirve tanto para importar datos como para leerlos:
-import { Car, iCar } from "../models/Car";
+import { Car } from "../models/Car";
 
 // Importamos la función que nos sirve para resetear los book:
 import { resetCars } from "../utils/resetCars";
