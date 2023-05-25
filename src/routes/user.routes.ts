@@ -9,11 +9,11 @@ import { generateToken } from "../utils/token";
 import { isAuth } from "../middlewares/author.middleware";
 
 // Importamos el modelo que nos sirve tanto para importar datos como para leerlos:
-import { User } from "../models/User.js";
-import { Car } from "../models/Car.js";
+import { User } from "../models/User";
+import { Car } from "../models/Car";
 
 // Importamos la función que nos sirve para resetear los book:
-import { resetUsers } from "../utils/resetUsers.js";
+import { resetUsers } from "../utils/resetUsers";
 
 import {
   type Request,
@@ -288,8 +288,3 @@ userRouter.post("/login", async (req: Request, res: Response, next: NextFunction
     next(error);
   }
 });
-
-//  ------------------------------------------------------------------------------------------
-
-// Exportamos
-module.exports = { userRouter };

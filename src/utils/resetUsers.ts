@@ -1,5 +1,5 @@
 // Importamos el modelo
-import { connect } from "../db.js";
+import { connect } from "../db";
 import { User } from "../models/User";
 
 // Creamos 50 users aleatoriamente y los vamos añadiendo al array de users:
