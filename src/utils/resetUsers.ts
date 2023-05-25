@@ -67,7 +67,7 @@ const userList = [
 ];
 
 //  Función de reseteo de documentos de la colección.
-export const resetUsers: any = async () => {
+export const resetUsers = async (): Promise<void> => {
   try {
     await connect();
     await User.collection.drop(); //  Esperamos a que borre los documentos de la collección users de la BBDD.

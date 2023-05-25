@@ -6,7 +6,7 @@ import { User } from "../models/User";
 import { generateRandom } from "../utils/generateRandom";
 
 //  Función de reseteo de documentos de la colección.
-export const carRelations: any = async () => {
+export const carRelations = async (): Promise<void> => {
   try {
     //  Recuperamos users, cars y brands
     const cars = await Car.find();

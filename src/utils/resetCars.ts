@@ -2,7 +2,7 @@
 import { Car } from "../models/Car";
 
 //  Función de reseteo de documentos de la colección.
-export const resetCars: any = async () => {
+export const resetCars = async (): Promise<void> => {
   try {
     //  Esperamos a que borre los documentos de la collección Car de la BBDD.
     await Car.collection.drop();
@@ -54,10 +54,8 @@ export const resetCars: any = async () => {
 
     await Car.insertMany(carList); //  Esperamos a que inserte los nuevos documentos creados en la colección Car de la BBDD.
     console.log("Creados Cars correctamente");
-    return null
   } catch (error) {
     //  Si hay error lanzamos el error por consola.
     console.error(error);
-    return null
   }
 };

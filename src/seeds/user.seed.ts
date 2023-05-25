@@ -8,7 +8,7 @@ import { connect } from "../db"; // Importamos el archivo de conexión a la BBDD
 import { resetUsers } from "../utils/resetUsers";
 
 //  Función asíncrona para conectar con la BBDD y ejecutar la función de reseteo de datos.
-const seedUsers: any = async () => {
+const seedUsers = async (): Promise<void> => {
   try {
     await connect(); //  Esperamos a que conecte con la BBDD.
     await resetUsers(); //  Esperamos que ejecute la función de reseteo de users.
@@ -21,4 +21,4 @@ const seedUsers: any = async () => {
   }
 };
 
-seedUsers(); //  Llamamos a la función.
+void seedUsers(); //  Llamamos a la función.

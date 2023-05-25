@@ -7,7 +7,7 @@ import { connect } from "../db";
 import { resetBrands } from "../utils/resetBrands";
 
 //  Función asíncrona para conectar con la BBDD y ejecutar la función de reseteo de datos.
-const seedBrands: any = async () => {
+const seedBrands = async (): Promise<void> => {
   try {
     await connect(); //  Esperamos a que conecte con la BBDD.
     await resetBrands(); //  Esperamos que ejecute la función de reseteo de cars.
