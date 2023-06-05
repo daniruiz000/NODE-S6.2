@@ -9,8 +9,8 @@ import { generateToken } from "../utils/token";
 import { isAuth } from "../middlewares/author.middleware";
 
 // Importamos el modelo que nos sirve tanto para importar datos como para leerlos:
-import { User } from "../models/User";
-import { Car } from "../models/Car";
+import { User } from "../models/mongo/User";
+import { Car } from "../models/mongo/Car";
 
 // Importamos la función que nos sirve para resetear los book:
 import { resetUsers } from "../utils/resetUsers";

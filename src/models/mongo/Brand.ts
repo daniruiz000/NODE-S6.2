@@ -1,4 +1,27 @@
 //  Importamos Mongoose
+/**
+ * @swagger
+ * components:
+ *  schemas:
+ *    Brand:
+ *      type: object
+ *      required:
+ *        - name
+ *      properties:
+ *        name:
+ *          type: string
+ *          description: Name of the brand (sample Ford)
+ *        creationYear:
+ *          type: number
+ *          description: Year when brand was created (sample 1990)
+ *        country:
+ *          type: string
+ *          description: Country of this Brand (sample SPAIN)
+ *        logoImage:
+ *          type: string
+ *          description: Logo of this brand (sample http://balbblabla.com/image.jpg)
+ */
+
 import mongoose from "mongoose";
 
 // Declaramos nuestro esquema que nos permite declarar nuestros objetos y crearle restricciones.

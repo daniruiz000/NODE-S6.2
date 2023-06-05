@@ -1,7 +1,7 @@
 // Importamos los modelos:
-import { Brand } from "../models/Brand";
-import { Car } from "../models/Car";
-import { User } from "../models/User";
+import { Brand } from "../models/mongo/Brand";
+import { Car } from "../models/mongo/Car";
+import { User } from "../models/mongo/User";
 
 import { generateRandom } from "../utils/generateRandom";
 

@@ -1,5 +1,5 @@
 // Importamos los modelos:
-import { Car } from "../models/Car";
+import { Car } from "../models/mongo/Car";
 
 //  Función de reseteo de documentos de la colección.
 export const resetCars = async (): Promise<void> => {

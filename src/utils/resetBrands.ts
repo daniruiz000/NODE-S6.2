@@ -1,5 +1,5 @@
 // Importamos los modelos:
-import { Brand } from "../models/Brand";
+import { Brand } from "../models/mongo/Brand";
 
 //  Función de reseteo de documentos de la colección.
 export const resetBrands = async (): Promise<void> => {

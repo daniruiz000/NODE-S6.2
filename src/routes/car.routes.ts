@@ -1,197 +1,319 @@
-// Importamos express:
-import express from "express";
+/**
+ * @swagger
+ * tags:
+ *   name: Car
+ *   description: The cars managing API
+ */
 
-// Importamos el modelo que nos sirve tanto para importar datos como para leerlos:
-import { Car } from "../models/Car";
+import express, { type NextFunction, type Response, type Request } from "express";
 
-// Importamos la función que nos sirve para resetear los book:
-import { resetCars } from "../utils/resetCars";
-import { resetBrands } from "../utils/resetBrands";
-import { resetUsers } from "../utils/resetUsers";
-import { carRelations } from "../utils/carRelations";
+// Modelos
+import { Car } from "../models/mongo/Car";
 
-import {
-  type Request,
-  type Response,
-  type NextFunction,
-} from "express";
-
-// Router propio de car:
+// Router propio de usuarios
 export const carRouter = express.Router();
 
-//  ------------------------------------------------------------------------------------------
-
-// Middleware previo al get de cars para comprobar los parametros:
-
-carRouter.get("/", async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * @swagger
+ * /car:
+ *   get:
+ *     summary: Lists all the cars
+ *     tags: [Car]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: The page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: The number of items to return
+ *     responses:
+ *       200:
+ *         description: The list of the cars
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Car'
+ *                 totalItems:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *                 currentPage:
+ *                   type: integer
+ *       400:
+ *         description: Invalid page or limit parameter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+carRouter.get("/", (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log("Estamos en el Middleware que comprueba los parámetros");
+    console.log("Estamos en el middleware /car que comprueba parámetros");
 
-    const page = req.query.page ? parseInt(req.query.page as string) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const page: number = req.query.page ? parseInt(req.query.page as string) : 1;
+    const limit: number = req.query.limit ? parseInt(req.query.limit as string) : 10;
 
     if (!isNaN(page) && !isNaN(limit) && page > 0 && limit > 0) {
       req.query.page = page as any;
       req.query.limit = limit as any;
       next();
     } else {
-      console.log("Parametros no validos:");
+      console.log("Parámetros no válidos:");
       console.log(JSON.stringify(req.query));
-      res.status(400).json({ error: "Params are not valid" });
+      res.status(400).json({ error: "Params page or limit are not valid" });
     }
   } catch (error) {
     next(error);
   }
 });
 
-//  ------------------------------------------------------------------------------------------
-
-/*  Ruta para recuperar todos los cars de manera paginada en función de un limite de elementos a mostrar
-por página para no saturar al navegador (CRUD: READ):
-*/
-
 carRouter.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const page = req.query.page as any;
-    const limit = req.query.limit as any;
-    const cars = await Car.find() // Devolvemos los cars si funciona. Con modelo.find().
-      .limit(limit) // La función limit se ejecuta sobre el .find() y le dice que coga un número limitado de elementos, coge desde el inicio a no ser que le añadamos...
-      .skip((page - 1) * limit) // La función skip() se ejecuta sobre el .find() y se salta un número determinado de elementos y con este cálculo podemos paginar en función del limit.
-      .populate(["owner", "brand"]); // Con populate le indicamos que si recoge un id en la propiedad señalada rellene con los campos de datos que contenga ese id
-    //  Creamos una respuesta más completa con info de la API y los datos solicitados por el car:
-    const totalElements = await Car.countDocuments(); //  Esperamos aque realice el conteo del número total de elementos con modelo.countDocuments()
-    const totalPagesByLimit = Math.ceil(totalElements / limit); // Para saber el número total de páginas que se generan en función del limit. Math.ceil() nos elimina los decimales.
+    // Asi leemos query params
+    const page: number = req.query.page as any;
+    const limit: number = req.query.limit as any;
 
-    // Respuesta Completa:
+    const cars = await Car.find()
+      .limit(limit)
+      .skip((page - 1) * limit)
+      .populate(["owner", "brand"]);
+
+    // Num total de elementos
+    const totalElements = await Car.countDocuments();
+
     const response = {
       totalItems: totalElements,
-      totalPages: totalPagesByLimit,
+      totalPages: Math.ceil(totalElements / limit),
       currentPage: page,
       data: cars,
     };
-    // Enviamos la respuesta como un json.
+
     res.json(response);
   } catch (error) {
     next(error);
   }
 });
 
-/* Ejemplo de REQ indicando que queremos la página 4 estableciendo un limite de 10 elementos
- por página (limit = 10 , pages = 4):
- http://localhost:3000/user?limit=10&page=4 */
-
-//  ------------------------------------------------------------------------------------------
-
-//  Ruta para recuperar un car en concreto a través de su id ( modelo.findById()) (CRUD: READ):
-
+/**
+ * @swagger
+ * /car/{id}:
+ *   get:
+ *     summary: Get a car by ID
+ *     tags: [Car]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The car ID
+ *     responses:
+ *       200:
+ *         description: The car info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Car'
+ *       404:
+ *         description: Car not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 carRouter.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = req.params.id; //  Recogemos el id de los parametros de la ruta.
-    const car = await Car.findById(id).populate(["owner", "brand"]); //  Buscamos un documentos con un id determinado dentro de nuestro modelo con modelo.findById(id a buscar).
+    const id = req.params.id;
+    const car = await Car.findById(id).populate(["owner", "brand"]);
     if (car) {
-      res.json(car); //  Si existe el car lo mandamos como respuesta en modo json.
+      res.json(car);
     } else {
-      res.status(404).json({}); //    Si no existe el car se manda un json vacio y un código 400.
+      res.status(404).json({ error: "Car not found" });
     }
   } catch (error) {
     next(error);
   }
 });
 
-// Ejemplo de REQ:
-// http://localhost:3000/user/id del car a buscar
+/**
+ * @swagger
+ * /car/brand/{brand}:
+ *   get:
+ *     summary: Get cars by brand
+ *     tags: [Car]
+ *     parameters:
+ *       - in: path
+ *         name: brand
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The car brand
+ *     responses:
+ *       200:
+ *         description: List of cars of the specified brand
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Car'
+ *       404:
+ *         description: Cars not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+carRouter.get("/brand/:brand", async (req: Request, res: Response, next: NextFunction) => {
+  const brand = req.params.brand;
 
-// Ejemplo de REQ:
-// http://localhost:3000/user/name/nombre del car a buscar
+  try {
+    const car = await Car.find({ brand: new RegExp("^" + brand.toLowerCase(), "i") }).populate(["owner", "brand"]);
+    if (car?.length) {
+      res.json(car);
+    } else {
+      res.status(404).json({ error: "There are no cars for this brand" });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
-//  ------------------------------------------------------------------------------------------
-
-//  Ruta para añadir elementos (CRUD: CREATE):
-
+/**
+ * @swagger
+ * /car:
+ *   post:
+ *     summary: Create a new car
+ *     tags: [Car]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Car'
+ *     responses:
+ *       201:
+ *         description: The car was created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Car'
+ *       400:
+ *         description: Missing parameters or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 carRouter.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const car = new Car(req.body); //     Un nuevo car es un nuevo modelo de la BBDD que tiene un Scheme que valida la estructura de esos datos que recoge del body de la petición.
-    const createdCar = await car.save(); // Esperamos a que guarde el nuevo car creado en caso de que vaya bien. Con el metodo .save().
-    res.status(201).json(createdCar); // Devolvemos un código 201 que significa que algo se ha creado y el car creado en modo json.
+    const car = new Car(req.body);
+    const createdCar = await car.save();
+    return res.status(201).json(createdCar);
   } catch (error) {
     next(error);
   }
 });
 
-/* Petición tipo de POST para añadir un nuevo car (añadimos al body el nuevo car con sus propiedades que tiene que cumplir con el Scheme de nuestro modelo) identificado por su id:
- const newUser = {firstName: "Prueba Nombre", lastName: "Prueba apellido", phone: "Prueba tlf"}
- fetch("http://localhost:3000/user/",{"body": JSON.stringify(newUser),"method":"POST","headers":{"Accept":"application/json","Content-Type":"application/json"}}).then((data)=> console.log(data)) */
-//  ------------------------------------------------------------------------------------------
-
-//  Endpoint para resetear los datos ejecutando cryptos:
-
-carRouter.delete("/reset", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    // La constante all recoge un boleano, si recogemos una query (all) y con valor (true), esta será true:
-    const all = req.query.all === "true";
-
-    // Si all es true resetearemos todos los datos de nuestras coleciones y las relaciones entre estas.
-    if (all) {
-      await resetBrands();
-      await resetUsers();
-      await resetCars();
-      await carRelations();
-      res.send("Datos reseteados y Relaciones reestablecidas");
-    } else {
-      await resetCars();
-      res.send("Datos Cars reseteados");
-    }
-    // Si falla el reseteo...
-  } catch (error) {
-    next(error);
-  }
-});
-
-//  ------------------------------------------------------------------------------------------
-
-//  Endpoin para eliminar car identificado por id (CRUD: DELETE):
-
+/**
+ * @swagger
+ * /car/{id}:
+ *   delete:
+ *     summary: Delete a car by ID
+ *     tags: [Car]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The car ID
+ *     responses:
+ *       200:
+ *         description: The car was successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Car'
+ *       404:
+ *         description: The car was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 carRouter.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = req.params.id; //  Recogemos el id de los parametros de la ruta.
-    const carDeleted = await Car.findByIdAndDelete(id); // Esperamos a que nos devuelve la info del car eliminado que busca y elimina con el metodo findByIdAndDelete(id del car a eliminar).
+    const id = req.params.id;
+    const carDeleted = await Car.findByIdAndDelete(id);
     if (carDeleted) {
-      res.json(carDeleted); //  Devolvemos el car eliminado en caso de que exista con ese id.
+      res.json(carDeleted);
     } else {
-      res.status(404).json({}); //  Devolvemos un código 404 y un objeto vacio en caso de que no exista con ese id.
+      res.status(404).json({ error: "Car was not found" });
     }
   } catch (error) {
     next(error);
   }
 });
 
-/* Petición tipo DELETE para eliminar un car (no añadimos body a la busqueda y recogemos el id de los parametros de la ruta) identificado por su id:
-
-fetch("http://localhost:3000/car/id del car a borrar",{"method":"DELETE","headers":{"Accept":"application/json","Content-Type":"application/json"}}).then((data)=> console.log(data))
-*/
-
-//  ------------------------------------------------------------------------------------------
-
-//  Endpoin para actualizar un elemento identificado por id (CRUD: UPDATE):
-
+/**
+ * @swagger
+ * /car/{id}:
+ *   put:
+ *     summary: Update a car by ID
+ *     tags: [Car]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The car ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Car'
+ *     responses:
+ *       200:
+ *         description: The car was successfully updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Car'
+ *       400:
+ *         description: Some parameters are missing or invalid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: The car was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 carRouter.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = req.params.id; //  Recogemos el id de los parametros de la ruta.
-    const carUpdated = await Car.findByIdAndUpdate(id, req.body, { new: true, runValidators: true }); // Esperamos que devuelva la info del car actualizado al que tambien hemos pasado un objeto con los campos q tiene que acualizar en la req del body de la petición. {new: true} Le dice que nos mande el car actualizado no el antiguo. Lo busca y elimina con el metodo findByIdAndDelete(id del car a eliminar).
+    const id = req.params.id;
+    const carUpdated = await Car.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
     if (carUpdated) {
-      res.json(carUpdated); //  Devolvemos el car actualizado en caso de que exista con ese id.
+      res.json(carUpdated);
     } else {
-      res.status(404).json({}); //  Devolvemos un código 404 y un objeto vacio en caso de que no exista con ese id.
+      res.status(404).json({ error: "Car was not found" });
     }
   } catch (error) {
     next(error);
   }
 });
-
-/* Petición tipo de PUT para actualizar datos concretos (en este caso el tlf) recogidos en el body,
-de un car en concreto (recogemos el id de los parametros de la ruta ):
-
-fetch("http://localhost:3000/user/id del car a actualizar",{"body": JSON.stringify({phone:5555}),"method":"PUT","headers":{"Accept":"application/json","Content-Type":"application/json"}}).then((data)=> console.log(data))
-*/
-
-//  ------------------------------------------------------------------------------------------
