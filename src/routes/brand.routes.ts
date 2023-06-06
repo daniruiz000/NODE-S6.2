@@ -84,6 +84,8 @@ brandRouter.get("/", async (req: Request, res: Response, next: NextFunction) => 
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Brand'
+ *       404:
+ *         description: No encontrado
  */
 brandRouter.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
