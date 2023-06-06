@@ -10,7 +10,7 @@ const Schema = mongoose.Schema;
 
 // Interface de address
 
-interface iAddress {
+export interface iAddress {
   street: string;
   number: number;
   city: string;
