@@ -188,7 +188,6 @@ userRouter.delete("/reset", async (req: Request, res: Response, next: NextFuncti
 //  Endpoint para eliminar usuario identificado por id (CRUD: DELETE):
 
 userRouter.delete("/:id", isAuth, async (req: any, res: Response, next: NextFunction) => {
-  // Si funciona el borrado...
   try {
     const id = req.params.id; //  Recogemos el id de los parametros de la ruta.
 
@@ -202,8 +201,6 @@ userRouter.delete("/:id", isAuth, async (req: any, res: Response, next: NextFunc
     } else {
       res.status(404).json({}); //  Devolvemos un código 404 y un objeto vacio en caso de que no exista con ese id.
     }
-
-    // Si falla el borrado...
   } catch (error) {
     next(error);
   }

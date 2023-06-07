@@ -1,5 +1,4 @@
 // Importamos el modelo
-import { mongoConnect } from "../databases/mongo-db";
 import { User } from "../models/mongo/User";
 
 // Creamos 50 users aleatoriamente y los vamos añadiendo al array de users:
@@ -69,7 +68,6 @@ const userList = [
 //  Función de reseteo de documentos de la colección.
 export const resetUsers = async (): Promise<void> => {
   try {
-    await mongoConnect();
     await User.collection.drop(); //  Esperamos a que borre los documentos de la collección users de la BBDD.
     console.log("Borrados users");
     const documents = userList.map((user) => new User(user));
